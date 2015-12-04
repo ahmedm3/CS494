@@ -425,7 +425,7 @@ if __name__ == "__main__":
     # start listening
     server_socket.listen(12)
 
-    broadcast_message('hi', server_socket)
+    #broadcast_message('hi', server_socket)
 
     # add this socket to the list of connections
     CONNECTIONS.append(server_socket)
@@ -478,25 +478,23 @@ if __name__ == "__main__":
 		            conn.send('Type /help for help')
 
 		            # set username
-		            ACCOUNTS[conn]['username'] = client_name
-
+		            ACCOUNTS[conn]['username'] = client_name 
 		            logging.info('%s has joined. Known as %s' % (addr, client_name))
-		    
-            # else we have a message from a client
-            else:
-            
-                try:
 
-                    # receiving data
-                    print 'Data: %s' % data
-                    data = sock.recv(REC_BUFFER)
+		    # else we have a message from a client
+	        else:
+					
+		        try:
 
-                    if data:
-                        
-                        # is it a command?
-                        if data.find('/') == 0:
-                            parse_data(data, sock)
+		            # receiving data
+		            data = sock.recv(REC_BUFFER)
 
-                except:
-                    logoff(sock)
-                    continue
+		            if data:
+								
+		                # is it a command?
+		                if data.find('/') == 0:
+		                    parse_data(data, sock)
+
+		        except:
+		            logoff(sock)
+		            continue
