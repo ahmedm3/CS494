@@ -1,29 +1,15 @@
 """
- An IRC server programmed in python for a CS494 project
- Note: code has been tested with python version 2.7.9
-
- Copyright (C) 2015  William Harringt, Portland State University
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ An IRC server programmed in python for a CS494 final project
+ Tested with python 2.7 (will not work with 3.0 or above)
 """
-import socket   # for socket objects
-import select   # for select function
-import logging  # for logging
-import signal   # for signal interrupts
-import sys      # for sys calls
-import random   # for random stuff
+
+
+import socket   # socket objects
+import select   # select function
+import logging  # logging
+import signal   # signal interrupts
+import sys      # sys calls
+import random   # random stuff
 
 
 def broadcast_data(sock, message):
@@ -821,9 +807,6 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
-    """Main function
-
-    """
 
     # for logging information on the server
     logging.basicConfig(level=logging.INFO,
