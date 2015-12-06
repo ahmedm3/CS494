@@ -94,7 +94,6 @@ def message_channels(sock, message, channels):
     for s in valid_users:
 
         if accounts[s]['current'] in channels:
-            logging.info('hiii')
             # try to send the message
             # if we can't send socket timed out so log client off
             try:
