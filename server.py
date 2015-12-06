@@ -28,13 +28,13 @@ def broadcast_data(sock, message):
     valid_users = []
 
     # go through sockets in connection list
-    for s in CONNECTION_LIST:
+    for s in CONNECTIONS:
 
         # do not store master socket or client who is sending message
         if s != server_socket and s != sock:
 
             # find sockets with non empty current channel
-            if accounts[s]['current'] != '':
+            if ACCOUNTS[s]['current'] != '':
 
                 # store them in array
                 valid_users.append(s)
@@ -43,7 +43,7 @@ def broadcast_data(sock, message):
     for s in valid_users:
 
         # Only send to sockets who are looking at the same current channel
-        if accounts[s]['current'] == accounts[sock]['current']:
+        if ACCOUNTS[s]['current'] == ACCOUNTS[sock]['current']:
             # try to send the message
             # if we can't send socket timed out so log client off
             try:
@@ -65,13 +65,13 @@ def message_channels(sock, message, channels):
     valid_users = []
 
     # go through sockets in connection list
-    for s in CONNECTION_LIST:
+    for s in CONNECTIONS:
 
         # do not store master socket or client who is sending message
         if s != server_socket and s != sock:
 
             # find sockets with non empty current channel
-            if accounts[s]['current'] != '':
+            if ACCOUNTS[s]['current'] != '':
 
                 # store them in array
                 valid_users.append(s)
@@ -79,7 +79,7 @@ def message_channels(sock, message, channels):
     # go through sockets in valid users
     for s in valid_users:
 
-        if accounts[s]['current'] in channels:
+        if ACCOUNTS[s]['current'] in channels:
             # try to send the message
             # if we can't send socket timed out so log client off
             try:
@@ -105,7 +105,7 @@ def parse_data(sock, message):
     if message.find('/PRIVMSG') == 0:
 
         # user not in any channels
-        if len(accounts[sock]['channels']) == 0:
+        if len(ACCOUNTS[sock]['channels']) == 0:
 
             # notify bad user!
             sock.send('\nMust join channel to send a message\r\n')
@@ -117,7 +117,7 @@ def parse_data(sock, message):
             if message[9]:
 
                 # name of user sending message
-                user = accounts[sock]['username']
+                user = ACCOUNTS[sock]['username']
 
                 # message to send
                 msg = message[9:]
@@ -162,7 +162,7 @@ def privatemsg(sock, msg):
     :param msg: message to send
     """
 
-    sender = accounts[sock]['username']
+    sender = ACCOUNTS[sock]['username']
 
     # split the msg string into array of strings
     # then grab the piece at index 1
@@ -184,13 +184,13 @@ def privatemsg(sock, msg):
 
     # check to see if that username is
     # in the user list
-    if user in USER_LIST:
+    if user in USERS:
 
-        # go through the accounts
-        for key in accounts:
+        # go through the ACCOUNTS
+        for key in ACCOUNTS:
 
             # find the specified user
-            if accounts[key]['username'] == user:
+            if ACCOUNTS[key]['username'] == user:
 
                 # try sending the private message
                 try:
@@ -289,7 +289,7 @@ def parse_data2(sock, message):
             channels = [x for x in message if x.startswith('#')] # make list of channels to send msg to
             channels = [x.strip(',') for x in channels]
             msg      = ' '.join(message[len(channels) + 1:])
-            user = accounts[sock]['username']
+            user = ACCOUNTS[sock]['username']
             message_channels(sock, '\n<%s> %s\r\n' % (user, msg), channels)
 
         # everything else is invalid
@@ -414,8 +414,8 @@ def who(sock, channel):
         # prompt
         sock.send('\nUsers currently connected to server\r\n')
 
-        # make string out of USER_LIST array
-        user_list = ", ".join(USER_LIST)
+        # make string out of USERS array
+        user_list = ", ".join(USERS)
 
         # send string
         sock.send('%s\r\n' % user_list)
@@ -424,23 +424,23 @@ def who(sock, channel):
         users_in_channel = []
 
         # No channels yet
-        if len(CHANNEL_LIST) == 0:
+        if len(CHANNELS) == 0:
             sock.send('\nNo channels currently on server\r\n')
 
         # We have channels to peek at
         else:
             # check if channel is in the list
-            if channel in CHANNEL_LIST:
+            if channel in CHANNELS:
 
                 # it is so tell the user who is in there
                 sock.send("\nUsers in %s\r\n" % channel)
 
-                # go through the accounts
-                for key in accounts:
+                # go through the ACCOUNTS
+                for key in ACCOUNTS:
 
                     # if channel listed in account, store it in array
-                    if channel in accounts[key]['channels']:
-                        users_in_channel.append(accounts[key]['username'])
+                    if channel in ACCOUNTS[key]['channels']:
+                        users_in_channel.append(ACCOUNTS[key]['username'])
 
                 # turn array into string
                 users_in_channel = ", ".join(users_in_channel)
@@ -456,13 +456,13 @@ def who(sock, channel):
 def list(sock):
     """Function processes list command which shows user list of channels on server
     If no channels are currently on the server then the user is prompted
-    Otherwise, each channel in CHANNEL_LIST is sent to the user
+    Otherwise, each channel in CHANNELS is sent to the user
 
     :param sock: socket object
     """
 
     # channel list is 0 so no channels
-    if len(CHANNEL_LIST) == 0:
+    if len(CHANNELS) == 0:
         sock.send('\nNo channels currently on server\r\n')
 
     # channel list is not 0 so send the list
@@ -472,7 +472,7 @@ def list(sock):
 
         # grab the channel list which is an array
         # and turn it a string
-        channel_list = ", ".join(CHANNEL_LIST)
+        channel_list = ", ".join(CHANNELS)
 
         # send string off to client
         sock.send('%s\r\n' % channel_list)
@@ -489,8 +489,8 @@ def logoff(sock):
     :param sock: socket object
     """
 
-    user = accounts[sock]['username']
-    channels = accounts[sock]['channels']
+    user = ACCOUNTS[sock]['username']
+    channels = ACCOUNTS[sock]['channels']
 
     # tell everyone that someone is leaving
     broadcast_data(sock, '\n%s has gone offline\r\n' % user)
@@ -505,18 +505,18 @@ def logoff(sock):
     logging.info('%s is offline' % user)
 
     # remove client from user list
-    USER_LIST.remove(user)
+    USERS.remove(user)
 
-    logging.info('Updated user list: %s' % USER_LIST)
+    logging.info('Updated user list: %s' % USERS)
 
     # close the socket
     sock.close()
 
     # remove socket from connection list
-    CONNECTION_LIST.remove(sock)
+    CONNECTIONS.remove(sock)
 
     # remove account
-    del accounts[sock]
+    del ACCOUNTS[sock]
 
 
 def whois(sock, username):
@@ -528,14 +528,14 @@ def whois(sock, username):
     """
 
     # check to see if username exists
-    if username in USER_LIST:
+    if username in USERS:
 
         # it does so lets find the socket
         # that is associated with that username
-        for key in accounts:
-            if accounts[key]['username'] == username:
-                ip = accounts[key]['ip']  # store ip
-                channels = accounts[key]['channels']  # store channel array
+        for key in ACCOUNTS:
+            if ACCOUNTS[key]['username'] == username:
+                ip = ACCOUNTS[key]['ip']  # store ip
+                channels = ACCOUNTS[key]['channels']  # store channel array
                 break  # break out of for loop
 
         # send client some info on this socket
@@ -567,21 +567,21 @@ def joinchannel(sock, channels):
     :param channel: channel name
     """
 
-    user = accounts[sock]['username']
-    num_channels = len(accounts[sock]['channels'])
+    user = ACCOUNTS[sock]['username']
+    num_channels = len(ACCOUNTS[sock]['channels'])
 
     for channel in channels:
 
-        if channel in CHANNEL_LIST:
+        if channel in CHANNELS:
 
             # make sure channel limit not reached
             if num_channels < 10:
 
                 # add channel to user's channels
-                accounts[sock]['channels'].append(channel)
+                ACCOUNTS[sock]['channels'].append(channel)
 
                 # make channel the user's current channel
-                accounts[sock]['current'] = channel
+                ACCOUNTS[sock]['current'] = channel
 
                 # notify client
                 sock.send('\nJoined %s\r\n' % channel)
@@ -602,13 +602,13 @@ def joinchannel(sock, channels):
                 if channel.find('#') == 0:
 
                     # create channel by adding it to the channel list
-                    CHANNEL_LIST.append(channel)
+                    CHANNELS.append(channel)
 
                     # add channel to user's channels
-                    accounts[sock]['channels'].append(channel)
+                    ACCOUNTS[sock]['channels'].append(channel)
 
                     # make channel the user's current channel
-                    accounts[sock]['current'] = channel
+                    ACCOUNTS[sock]['current'] = channel
 
                     # notify client
                     sock.send('\nJoined %s\r\n' % channel)
@@ -618,7 +618,7 @@ def joinchannel(sock, channels):
 
                     # for the server logs
                     logging.info('New channel: %s' % channel)
-                    logging.info('Updated channel list: %s' % CHANNEL_LIST)
+                    logging.info('Updated channel list: %s' % CHANNELS)
 
                 # invalid channel name, no bueno
                 else:
@@ -637,8 +637,8 @@ def leavechannel(sock, channel):
     :param channel: channel to leave
     """
 
-    user = accounts[sock]['username']
-    channels = accounts[sock]['channels']
+    user = ACCOUNTS[sock]['username']
+    channels = ACCOUNTS[sock]['channels']
 
     # check to see if user is even in that channel
     if channel in channels:
@@ -648,33 +648,33 @@ def leavechannel(sock, channel):
 
         # user has the channel in their channel list
         # check to see if its their current channel
-        if accounts[sock]['current'] == channel:
+        if ACCOUNTS[sock]['current'] == channel:
 
             # reset current channel
-            accounts[sock]['current'] = ''
+            ACCOUNTS[sock]['current'] = ''
 
             # remove channel from user's
             # channel list
-            accounts[sock]['channels'].remove(channel)
+            ACCOUNTS[sock]['channels'].remove(channel)
 
             # notify user
             sock.send('\nYou left %s\r\n' % channel)
 
             # update channels variable
-            channels = accounts[sock]['channels']
+            channels = ACCOUNTS[sock]['channels']
 
             # update current channel by
             # randomly selecting a channel from their list
             if len(channels) > 0:
                 current = random.choice(channels)
-                accounts[sock]['current'] = current
+                ACCOUNTS[sock]['current'] = current
                 sock.send('\nCurrent channel is now %s\r\n' % current)
 
         # not user's current channel
         else:
             # remove channel from user's
             # channel list
-            accounts[sock]['channels'].remove(channel)
+            ACCOUNTS[sock]['channels'].remove(channel)
 
             # notify user
             sock.send('\nYou left %s\r\n' % channel)
@@ -686,11 +686,11 @@ def leavechannel(sock, channel):
         # counter variable
         count = 0
 
-        # go through the accounts
-        for key in accounts:
+        # go through the ACCOUNTS
+        for key in ACCOUNTS:
 
-            # found accounts in channel
-            if channel in accounts[key]['channels']:
+            # found ACCOUNTS in channel
+            if channel in ACCOUNTS[key]['channels']:
 
                 # count em up
                 count += 1
@@ -699,11 +699,11 @@ def leavechannel(sock, channel):
         if count == 0:
 
             # remove from channel list
-            CHANNEL_LIST.remove(channel)
+            CHANNELS.remove(channel)
 
             # log info for server
             logging.info('%s removed from channel list' % channel)
-            logging.info('Updated channel list: %s' % CHANNEL_LIST)
+            logging.info('Updated channel list: %s' % CHANNELS)
 
     # user isn't in that channel
     else:
@@ -721,13 +721,13 @@ def switchcurrent(sock, channel):
     """
 
     # as long as they are in that channel
-    if channel in accounts[sock]['channels']:
+    if channel in ACCOUNTS[sock]['channels']:
 
         # switch current channel
-        accounts[sock]['current'] = channel
+        ACCOUNTS[sock]['current'] = channel
 
         # store current channel
-        current = accounts[sock]['current']
+        current = ACCOUNTS[sock]['current']
 
         # notify of successful switch
         sock.send('\nCurrent channel is now %s\r\n' % current)
@@ -750,19 +750,19 @@ def changenick(sock, nick):
     # nick argument not provided
     # echo back username
     if nick is None:
-        sock.send('\nCurrent username: %s\r\n' % accounts[sock]['username'])
+        sock.send('\nCurrent username: %s\r\n' % ACCOUNTS[sock]['username'])
 
         # get outta here
         return
 
     # nick argument provided
     # check to see if its in the list
-    if nick in USER_LIST:
+    if nick in USERS:
 
         # its in the list, now
         # check to see if that is already
         # their username!
-        if nick == accounts[sock]['username']:
+        if nick == ACCOUNTS[sock]['username']:
             sock.send('\nThats already your username\r\n')
 
         # nope its not but its in use!
@@ -771,16 +771,16 @@ def changenick(sock, nick):
     else:
 
         # store old username
-        old = accounts[sock]['username']
+        old = ACCOUNTS[sock]['username']
 
         # remove the old username
-        USER_LIST.remove(old)
+        USERS.remove(old)
 
         # set new username
-        accounts[sock]['username'] = nick
+        ACCOUNTS[sock]['username'] = nick
 
-        # update the USER_LIST
-        USER_LIST.append(nick)
+        # update the USERS
+        USERS.append(nick)
 
         # tell everyone about the change
         broadcast_data(sock, '\n%s is now know as %s\r\n' % (old, nick))
@@ -794,7 +794,7 @@ def signal_handler(signal, frame):
     :param frame: current stack frame
     """
 
-    for s in CONNECTION_LIST:
+    for s in CONNECTIONS:
         if s != server_socket:
             logoff(s)
     server_socket.close()
@@ -814,16 +814,16 @@ if __name__ == "__main__":
                         datefmt='%d/%m/%Y %I:%M:%S %p')
 
     # to keep track of user information
-    accounts = {}
+    ACCOUNTS = {}
 
     # list to keep track of usernames
-    USER_LIST = []
+    USERS = []
 
     # list to keep track of socket descriptors
-    CONNECTION_LIST = []
+    CONNECTIONS = []
 
     # array to keep track of channels
-    CHANNEL_LIST = []
+    CHANNELS = []
 
     # receiving buffer size
     RECV_BUFFER = 512
@@ -844,7 +844,7 @@ if __name__ == "__main__":
     server_socket.listen(10)
 
     # Add server socket to the list of readable connections
-    CONNECTION_LIST.append(server_socket)
+    CONNECTIONS.append(server_socket)
 
     server_ip = socket.gethostbyname(socket.gethostname())
     server_port = str(PORT)
@@ -855,7 +855,7 @@ if __name__ == "__main__":
     while 1:
         # Get the list sockets which are ready to be read through select
         read_sockets, write_sockets, error_sockets = select.select(
-            CONNECTION_LIST, [], [])
+            CONNECTIONS, [], [])
 
         for sock in read_sockets:
 
@@ -867,10 +867,10 @@ if __name__ == "__main__":
                 sockfd, addr = server_socket.accept()
 
                 # Add to connection list
-                CONNECTION_LIST.append(sockfd)
+                CONNECTIONS.append(sockfd)
 
                 # create an account, in the account dictionary
-                accounts[sockfd] = {
+                ACCOUNTS[sockfd] = {
                     'username': '',
                     'ip': '',
                     'channels': [],
@@ -878,17 +878,17 @@ if __name__ == "__main__":
                 }
 
                 # store IP address
-                accounts[sockfd]['ip'] = addr[0]
+                ACCOUNTS[sockfd]['ip'] = addr[0]
 
                 # get the client's username
                 name = sockfd.recv(RECV_BUFFER)
 
                 # check to see if its already being used
-                if name in USER_LIST:
+                if name in USERS:
 
                     sockfd.send('\nUsername already in use\r\n')
                     sockfd.close()
-                    CONNECTION_LIST.remove(sockfd)
+                    CONNECTIONS.remove(sockfd)
 
                 else:
 
@@ -897,15 +897,15 @@ if __name__ == "__main__":
                     sockfd.send('Welcome to Internet Relay Chat!!\r\n')
                     sockfd.send('type /help for list of commands\r\n')
                     # set the username in the account
-                    accounts[sockfd]['username'] = name
+                    ACCOUNTS[sockfd]['username'] = name
 
                     # add to user list
-                    USER_LIST.append(name)
+                    USERS.append(name)
 
                     # log some info for the server
                     logging.info('Client (%s, %s) connected' % addr)
                     logging.info('Client is know as %s' % name)
-                    logging.info('Updated user list: %s' % USER_LIST)
+                    logging.info('Updated user list: %s' % USERS)
 
             # Some incoming message from a client
             else:
