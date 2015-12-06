@@ -39,9 +39,6 @@ signal.signal(signal.SIGINT, signal_handler)
 
 
 if __name__ == "__main__":
-    """Main function
-
-    """
 
     # user supplied the wrong amount of arguments
     if(len(sys.argv) < 4):
@@ -61,7 +58,7 @@ if __name__ == "__main__":
     # protect against user names
     # longer than 9 chars
     if len(username) > 9:
-        print 'Username is too long. Max is 9 characters'
+        print 'Username %s is too long. Max is 9 characters' % username
         sys.exit()
 
     # create TCP Socket
